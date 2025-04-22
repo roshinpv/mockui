@@ -98,11 +98,11 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
 
   return (
     <div className="p-6">
-      <h3 className="text-lg font-medium text-navy-500 mb-6">Request Matching Configuration</h3>
+      <h3 className="text-lg font-medium text-brand-500 mb-6">Request Matching Configuration</h3>
       
       {/* HTTP Method */}
       <div className="mb-6">
-        <label htmlFor="method" className="block text-sm font-medium text-navy-500 mb-1">
+        <label htmlFor="method" className="block text-sm font-medium text-brand-500 mb-1">
           HTTP Method
         </label>
         <select
@@ -126,20 +126,20 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
       {/* URL Matching */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-1">
-          <label htmlFor="urlType" className="block text-sm font-medium text-navy-500">
+          <label htmlFor="urlType" className="block text-sm font-medium text-brand-500">
             URL Matching
           </label>
           <button 
             type="button" 
             onClick={() => setShowUrlHelp(!showUrlHelp)}
-            className="text-gray-400 hover:text-navy-500"
+            className="text-gray-400 hover:text-brand-500"
           >
             <HelpCircle className="h-4 w-4" />
           </button>
         </div>
         
         {showUrlHelp && (
-          <div className="mb-4 p-3 bg-navy-50 rounded-md text-sm text-navy-700">
+          <div className="mb-4 p-3 bg-brand-50 rounded-md text-sm text-brand-700">
             <p><strong>urlPath</strong>: Exact match for URL path (e.g., "/api/users")</p>
             <p><strong>urlPattern</strong>: Regex match for entire URL (e.g., ".*\/users\/[0-9]+")</p>
             <p><strong>urlPathPattern</strong>: Regex match for just the path (e.g., "\/users\/[0-9]+")</p>
@@ -173,20 +173,20 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
       {/* Headers */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-navy-500">
+          <label className="block text-sm font-medium text-brand-500">
             Headers
           </label>
           <button 
             type="button" 
             onClick={() => setShowHeadersHelp(!showHeadersHelp)}
-            className="text-gray-400 hover:text-navy-500"
+            className="text-gray-400 hover:text-brand-500"
           >
             <HelpCircle className="h-4 w-4" />
           </button>
         </div>
         
         {showHeadersHelp && (
-          <div className="mb-4 p-3 bg-navy-50 rounded-md text-sm text-navy-700">
+          <div className="mb-4 p-3 bg-brand-50 rounded-md text-sm text-brand-700">
             <p>Headers will be matched exactly with the incoming request.</p>
             <p>Common headers: Content-Type, Authorization, Accept</p>
           </div>
@@ -223,20 +223,20 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
             type="text"
             value={newHeaderKey}
             onChange={(e) => setNewHeaderKey(e.target.value)}
-            className="w-1/3 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="w-1/2 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-brand-500 focus:border-brand-500"
             placeholder="Header name"
           />
           <input
             type="text"
             value={newHeaderValue}
             onChange={(e) => setNewHeaderValue(e.target.value)}
-            className="flex-1 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="w-1/2 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-brand-500 focus:border-brand-500"
             placeholder="Value"
           />
           <button
             type="button"
             onClick={addHeader}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
             disabled={!newHeaderKey || !newHeaderValue}
           >
             <Plus className="h-4 w-4" />
@@ -246,7 +246,7 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
       
       {/* Query Parameters */}
       <div className="mb-6">
-        <label className="block text-sm font-medium text-navy-500 mb-1">
+        <label className="block text-sm font-medium text-brand-500 mb-1">
           Query Parameters
         </label>
         
@@ -281,20 +281,20 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
             type="text"
             value={newQueryKey}
             onChange={(e) => setNewQueryKey(e.target.value)}
-            className="w-1/3 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="w-1/2 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-brand-500 focus:border-brand-500"
             placeholder="Parameter name"
           />
           <input
             type="text"
             value={newQueryValue}
             onChange={(e) => setNewQueryValue(e.target.value)}
-            className="flex-1 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
+            className="w-1/2 shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-brand-500 focus:border-brand-500"
             placeholder="Value"
           />
           <button
             type="button"
             onClick={addQueryParam}
-            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-primary-500 hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
             disabled={!newQueryKey || !newQueryValue}
           >
             <Plus className="h-4 w-4" />
@@ -305,7 +305,7 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
       {/* Body Patterns (Advanced) */}
       <div>
         <div className="flex items-center justify-between mb-1">
-          <label className="block text-sm font-medium text-navy-500">
+          <label className="block text-sm font-medium text-brand-500">
             Body Patterns
           </label>
         </div>
@@ -314,7 +314,7 @@ const RequestConfig: React.FC<RequestConfigProps> = ({ stub, onChange }) => {
         </p>
         <button
           type="button"
-          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-navy-500 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-brand-500 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500"
           onClick={() => onChange('activeTab', 'advanced')}
         >
           <Code className="h-4 w-4 mr-2" />

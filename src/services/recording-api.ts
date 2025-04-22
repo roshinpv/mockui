@@ -7,7 +7,7 @@ export interface RecordingState {
   targetUrl?: string;
 }
 
-const BASE_URL = '/api/recording';
+const BASE_URL = 'http://localhost:8080/api/recording';
 
 export const recordingApi = {
   startRecording: async (targetUrl: string): Promise<void> => {

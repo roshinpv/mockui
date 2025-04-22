@@ -355,3 +355,25 @@ textarea {
 .input-group input:last-child {
   @apply rounded-r-md;
 }
+
+/* Dashboard Icon Styles */
+.dashboard-icon {
+  @apply text-brand-500 h-5 w-5;
+}
+
+.dashboard-icon:hover {
+  @apply text-brand-600;
+}
+
+/* Save Button Specific Styles */
+.btn-save {
+  @apply btn bg-brand-500 text-white font-medium shadow-sm
+         hover:bg-brand-600 active:bg-brand-700
+         focus:ring-2 focus:ring-offset-2 focus:ring-brand-500;
+}
+
+.btn-save-secondary {
+  @apply btn bg-white text-brand-500 border border-brand-300 font-medium shadow-sm
+         hover:bg-brand-50 hover:border-brand-400 active:bg-brand-100
+         focus:ring-2 focus:ring-offset-2 focus:ring-brand-500;
+}
