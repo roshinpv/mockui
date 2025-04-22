@@ -1,0 +1,1 @@
+export type RecordingStatus = 'NeverStarted' | 'Recording' | 'Stopped' | 'Playing'; 

@@ -1,0 +1,357 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-brand: 200, 16, 46;      /* Wells Fargo red */
+    --color-brand-light: 220, 36, 66; /* Lighter red */
+    --color-brand-lighter: 255, 235, 240; /* Lightest red */
+    --color-secondary: 252, 181, 20; /* Wells Fargo yellow */
+    --color-secondary-light: 255, 201, 40;
+    --color-neutral: 33, 33, 33;    /* Dark neutral */
+    --color-neutral-light: 82, 82, 82; /* Light neutral */
+    --color-neutral-lighter: 248, 248, 248; /* Lightest neutral */
+  }
+  
+  /* Base form elements */
+  input, select, textarea {
+    @apply appearance-none font-medium;
+  }
+  
+  select {
+    @apply pr-8;
+  }
+}
+
+/* Base Styles */
+body {
+  @apply bg-white text-neutral-800 font-sans antialiased text-sm;
+}
+
+/* Form Control Base */
+.form-control {
+  @apply w-full px-3 py-2 text-sm leading-5 rounded-md border border-neutral-200 
+         focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500
+         transition-all duration-150 ease-in-out shadow-sm bg-white;
+}
+
+/* Input Styles */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+input[type="url"],
+input[type="search"],
+input[type="tel"] {
+  @apply form-control h-10 hover:border-neutral-300;
+}
+
+/* Search Input with Icon */
+.search-input {
+  @apply form-control h-10 hover:border-neutral-300 pl-9 pr-9;
+}
+
+.search-input-icon {
+  @apply absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none;
+}
+
+.search-input-clear {
+  @apply absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-500 cursor-pointer;
+}
+
+/* Select Styles */
+select {
+  @apply form-control h-10 bg-white hover:border-neutral-300 cursor-pointer text-sm;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23666666' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.6rem center;
+  background-repeat: no-repeat;
+  background-size: 1.2em 1.2em;
+  padding-right: 2.5rem;
+}
+
+/* Custom Select - With matching border width on focus */
+select:focus {
+  @apply outline-none ring-1 ring-brand-500 border border-brand-500;
+  box-shadow: 0 0 0 1px rgba(var(--color-brand), 0.2);
+}
+
+/* Textarea Styles */
+textarea {
+  @apply form-control min-h-[100px] resize-y hover:border-neutral-300;
+}
+
+/* Form Group Styles */
+.form-group {
+  @apply mb-4;
+}
+
+.form-group label {
+  @apply block text-sm font-medium text-neutral-700 mb-1;
+}
+
+.form-group .help-text {
+  @apply mt-1 text-xs text-neutral-500;
+}
+
+/* Input States */
+.form-control:disabled,
+.form-control[readonly] {
+  @apply bg-neutral-50 text-neutral-500 cursor-not-allowed border-neutral-200;
+}
+
+.form-control.error {
+  @apply border-red-300 focus:ring-red-500 focus:border-red-500;
+}
+
+.form-control.success {
+  @apply border-green-300 focus:ring-green-500 focus:border-green-500;
+}
+
+/* Error Message */
+.error-text {
+  @apply mt-1 text-xs text-red-500;
+}
+
+/* Button Base */
+.btn {
+  @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md 
+         transition-all duration-150 ease-in-out focus:outline-none focus:ring-1 focus:ring-offset-1
+         disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+/* Button Variants */
+.btn-primary {
+  @apply btn bg-brand-500 text-white hover:bg-brand-600 
+         focus:ring-brand-500 focus:ring-offset-white;
+}
+
+.btn-secondary {
+  @apply btn bg-white text-brand-500 border border-brand-200 
+         hover:bg-brand-50 hover:border-brand-300 focus:ring-brand-500;
+}
+
+.btn-danger {
+  @apply btn bg-brand-500 text-white hover:bg-brand-600 
+         focus:ring-brand-500;
+}
+
+.btn-success {
+  @apply btn bg-green-600 text-white hover:bg-green-700 
+         focus:ring-green-500;
+}
+
+.btn-warning {
+  @apply btn bg-secondary-500 text-white hover:bg-secondary-600 
+         focus:ring-secondary-500;
+}
+
+/* Button Sizes */
+.btn-sm {
+  @apply px-2.5 py-1.5 text-xs;
+}
+
+.btn-lg {
+  @apply px-5 py-2.5 text-base;
+}
+
+/* Card Styles */
+.card {
+  @apply bg-white rounded-md border border-neutral-200 shadow-sm overflow-hidden;
+}
+
+.card-header {
+  @apply px-5 py-3 border-b border-neutral-200 bg-brand-50;
+}
+
+.card-body {
+  @apply p-5;
+}
+
+.card-footer {
+  @apply px-5 py-3 border-t border-neutral-200 bg-neutral-50;
+}
+
+/* Status Badge Styles */
+.status-badge {
+  @apply inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium;
+}
+
+.status-badge-recording {
+  @apply bg-brand-50 text-brand-700 border border-brand-200;
+}
+
+.status-badge-playing {
+  @apply bg-secondary-50 text-secondary-800 border border-secondary-200;
+}
+
+.status-badge-stopped {
+  @apply bg-neutral-100 text-neutral-600 border border-neutral-200;
+}
+
+/* Alert Styles */
+.alert {
+  @apply rounded-md border p-3;
+}
+
+.alert-error {
+  @apply border-brand-200 bg-brand-50 text-brand-700;
+}
+
+/* Layout Styles */
+.container {
+  @apply max-w-4xl mx-auto py-6 px-4 sm:px-6 lg:px-8;
+}
+
+.section-header {
+  @apply mb-6;
+}
+
+.section-title {
+  @apply text-xl font-semibold text-brand-500;
+}
+
+.section-description {
+  @apply mt-1 text-sm text-neutral-600;
+}
+
+/* Navigation Styles */
+.nav-link {
+  @apply flex items-center px-3 py-2 text-sm font-medium rounded-md 
+         text-neutral-700 hover:text-brand-500 hover:bg-brand-50
+         transition-colors duration-150;
+}
+
+.nav-link.active {
+  @apply text-brand-500 bg-brand-50 font-medium;
+}
+
+/* Table Styles */
+.table {
+  @apply min-w-full divide-y divide-neutral-200;
+}
+
+.table th {
+  @apply px-4 py-2 text-left text-xs font-medium text-neutral-700 uppercase tracking-wider bg-neutral-50;
+}
+
+.table td {
+  @apply px-4 py-3 whitespace-nowrap text-sm text-neutral-900;
+}
+
+.table tr {
+  @apply hover:bg-neutral-50 border-b border-neutral-100;
+}
+
+/* Modal Styles */
+.modal {
+  @apply fixed inset-0 z-50 overflow-y-auto;
+}
+
+.modal-backdrop {
+  @apply fixed inset-0 bg-neutral-900 bg-opacity-50 transition-opacity;
+}
+
+.modal-content {
+  @apply relative bg-white rounded-md shadow-lg max-w-lg mx-auto my-8 p-5 border border-neutral-200;
+}
+
+/* Responsive Form Layout */
+.form-row {
+  @apply flex flex-wrap -mx-2;
+}
+
+.form-col {
+  @apply px-2 w-full;
+}
+
+.form-col-6 {
+  @apply form-col md:w-1/2;
+}
+
+.form-col-4 {
+  @apply form-col md:w-1/3;
+}
+
+.form-col-8 {
+  @apply form-col md:w-2/3;
+}
+
+.form-col-3 {
+  @apply form-col md:w-1/4;
+}
+
+/* Custom Form Elements */
+.custom-select {
+  @apply relative;
+}
+
+.custom-select select {
+  @apply appearance-none w-full py-2 pl-3 pr-8 rounded-md border border-neutral-200
+         bg-white focus:outline-none focus:ring-1 focus:ring-brand-500 focus:border-brand-500
+         transition-all duration-150 ease-in-out shadow-sm cursor-pointer text-sm;
+}
+
+.custom-select::after {
+  content: '';
+  @apply absolute right-3 top-1/2 transform -translate-y-1/2 border-l-4 border-r-4 border-t-4
+         border-t-neutral-500 border-l-transparent border-r-transparent pointer-events-none;
+}
+
+/* Form Grid - For forms with multiple inputs in a row */
+.form-grid {
+  @apply grid gap-4 sm:grid-cols-2;
+}
+
+.form-grid-3 {
+  @apply grid gap-4 sm:grid-cols-3;
+}
+
+/* Checkbox and Radio button styles */
+.checkbox-container, .radio-container {
+  @apply flex items-center mb-2;
+}
+
+.checkbox-container input[type="checkbox"],
+.radio-container input[type="radio"] {
+  @apply h-4 w-4 text-brand-500 border-neutral-300 rounded focus:ring-brand-500;
+}
+
+.checkbox-container label,
+.radio-container label {
+  @apply ml-2 text-sm text-neutral-700;
+}
+
+/* Inline Form Elements */
+.inline-form-group {
+  @apply flex items-center space-x-2;
+}
+
+.input-group {
+  @apply flex;
+}
+
+.input-group-prepend,
+.input-group-append {
+  @apply flex items-center px-3 bg-neutral-50 border border-neutral-200 text-neutral-500 text-sm;
+}
+
+.input-group-prepend {
+  @apply rounded-l-md border-r-0;
+}
+
+.input-group-append {
+  @apply rounded-r-md border-l-0;
+}
+
+.input-group input {
+  @apply rounded-none flex-1;
+}
+
+.input-group input:first-child {
+  @apply rounded-l-md;
+}
+
+.input-group input:last-child {
+  @apply rounded-r-md;
+}

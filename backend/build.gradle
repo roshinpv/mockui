@@ -1,0 +1,92 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.2.1'
+    id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'com.wiremock'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+    all {
+        resolutionStrategy {
+            force 'org.eclipse.jetty:jetty-server:11.0.20'
+            force 'org.eclipse.jetty:jetty-servlet:11.0.20'
+            force 'org.eclipse.jetty:jetty-servlets:11.0.20'
+            force 'org.eclipse.jetty:jetty-webapp:11.0.20'
+            force 'org.eclipse.jetty:jetty-io:11.0.20'
+            force 'org.eclipse.jetty:jetty-util:11.0.20'
+            force 'org.eclipse.jetty.http2:http2-server:11.0.20'
+            force 'org.eclipse.jetty:jetty-alpn-server:11.0.20'
+            force 'org.eclipse.jetty:jetty-http:11.0.20'
+            force 'org.eclipse.jetty:jetty-security:11.0.20'
+            force 'org.eclipse.jetty:jetty-xml:11.0.20'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Spring Boot
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    
+    // Database
+    implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'org.hibernate.orm:hibernate-community-dialects'
+    
+    // WireMock
+    implementation 'org.wiremock:wiremock:3.3.1'
+    
+    // Jetty dependencies
+    implementation 'org.eclipse.jetty:jetty-server:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-servlet:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-servlets:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-webapp:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-io:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-util:11.0.20'
+    implementation 'org.eclipse.jetty.http2:http2-server:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-alpn-server:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-http:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-security:11.0.20'
+    implementation 'org.eclipse.jetty:jetty-xml:11.0.20'
+    
+    // SOAP dependencies
+    implementation 'com.sun.xml.ws:jaxws-rt:4.0.1'
+    implementation 'jakarta.xml.ws:jakarta.xml.ws-api:4.0.1'
+    implementation 'jakarta.xml.bind:jakarta.xml.bind-api:4.0.1'
+    implementation 'org.glassfish.jaxb:jaxb-runtime:4.0.4'
+    implementation 'org.apache.cxf:cxf-rt-frontend-jaxws:4.0.3'
+    implementation 'org.apache.cxf:cxf-rt-transports-http:4.0.3'
+    implementation 'org.apache.cxf:cxf-rt-wsdl:4.0.3'
+    
+    // GraphQL
+    implementation 'com.graphql-java:graphql-java:21.3'
+    implementation 'com.graphql-java:graphql-java-tools:5.2.4'
+    
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    
+    // Test
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+bootJar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
