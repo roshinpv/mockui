@@ -4,6 +4,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.wiremock.ui.model.GraphQLStub;
 import com.wiremock.ui.repository.GraphQLStubRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.util.List;
 public class GraphQLStubService {
     private final GraphQLStubRepository graphQLStubRepository;
     private final WireMockServer wireMockServer;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public GraphQLStub createStub(GraphQLStub stub) {
@@ -29,13 +31,13 @@ public class GraphQLStubService {
     }
 
     @Transactional(readOnly = true)
-    public GraphQLStub getStubById(Long id) {
+    public GraphQLStub getStubById(String id) {
         return graphQLStubRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("GraphQL stub not found"));
+            .orElseThrow(() -> new RuntimeException("GraphQL stub not found with ID: " + id));
     }
 
     @Transactional
-    public GraphQLStub updateStub(Long id, GraphQLStub stub) {
+    public GraphQLStub updateStub(String id, GraphQLStub stub) {
         GraphQLStub existingStub = getStubById(id);
         
         existingStub.setName(stub.getName());
@@ -57,21 +59,27 @@ public class GraphQLStubService {
     }
 
     @Transactional
-    public void deleteStub(Long id) {
+    public void deleteStub(String id) {
         GraphQLStub stub = getStubById(id);
         graphQLStubRepository.delete(stub);
         removeWireMockStub(stub);
     }
 
     private void updateWireMockStub(GraphQLStub stub) {
-        wireMockServer.stubFor(WireMock.post("/graphql")
-            .withRequestBody(WireMock.matchingJsonPath("$.operationName", 
-                WireMock.equalTo(stub.getOperationName())))
-            .withRequestBody(WireMock.matchingJsonPath("$.query", 
-                WireMock.equalTo(stub.getQuery())))
-            .willReturn(WireMock.aResponse()
-                .withHeader("Content-Type", "application/json")
-                .withBody(stub.getResponse())));
+        try {
+            String responseJson = stub.getResponse();
+            
+            wireMockServer.stubFor(WireMock.post("/graphql")
+                .withRequestBody(WireMock.matchingJsonPath("$.operationName", 
+                    WireMock.equalTo(stub.getOperationName())))
+                .withRequestBody(WireMock.matchingJsonPath("$.query", 
+                    WireMock.equalTo(stub.getQuery())))
+                .willReturn(WireMock.aResponse()
+                    .withHeader("Content-Type", "application/json")
+                    .withBody(responseJson)));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update WireMock GraphQL stub", e);
+        }
     }
 
     private void removeWireMockStub(GraphQLStub stub) {

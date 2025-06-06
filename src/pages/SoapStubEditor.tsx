@@ -10,7 +10,10 @@ import {
   GitBranch,
   Sliders,
   Globe,
-  Code
+  Code,
+  Play,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { SoapStub, defaultSoapStub, XPathMatcher } from '../types/soap';
@@ -27,6 +30,8 @@ const SoapStubEditor: React.FC = () => {
   const [isDirty, setIsDirty] = useState(false);
   const [xmlNamespaces, setXmlNamespaces] = useState<Record<string, string>>({});
   const [xpathMatchers, setXpathMatchers] = useState<XPathMatcher[]>([]);
+  const [executeResponse, setExecuteResponse] = useState<{status: number, body: string, headers: Record<string, string>} | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   // Fetch existing stub if editing
   const { data: existingStub } = useQuery({
@@ -118,24 +123,69 @@ const SoapStubEditor: React.FC = () => {
   const validateStub = (): string[] => {
     const errors: string[] = [];
     
+    // Basic required field validation
     if (!stub.name) errors.push('Name is required');
     if (!stub.soapAction) errors.push('SOAP Action is required');
     if (!stub.request) errors.push('Request XML is required');
     if (!stub.response) errors.push('Response XML is required');
     
+    // SOAP XML format validation
+    if (stub.request && !validateXml(stub.request, 'request')) {
+      errors.push('Request XML is not valid SOAP format');
+    }
+    
+    if (stub.response && !validateXml(stub.response, 'response')) {
+      errors.push('Response XML is not valid SOAP format');
+    }
+    
+    // Validate JSON string fields
     try {
-      JSON.parse(stub.xmlNamespaces);
+      const namespaces = JSON.parse(stub.xmlNamespaces);
+      
+      // Check if namespaces are valid
+      for (const [prefix, uri] of Object.entries(namespaces)) {
+        if (!prefix) errors.push('Namespace prefix cannot be empty');
+        if (!uri) errors.push(`Namespace URI for prefix "${prefix}" cannot be empty`);
+      }
     } catch (e) {
       errors.push('XML Namespaces must be valid JSON');
     }
 
     try {
-      JSON.parse(stub.xpathMatchers);
+      const matchers = JSON.parse(stub.xpathMatchers);
+      
+      // Validate XPath matchers
+      for (let i = 0; i < matchers.length; i++) {
+        const matcher = matchers[i];
+        if (!matcher.xpath) errors.push(`XPath expression is required for matcher #${i+1}`);
+        if (!matcher.expectedValue) errors.push(`Expected value is required for matcher #${i+1}`);
+        if (!matcher.matchType) errors.push(`Match type is required for matcher #${i+1}`);
+      }
     } catch (e) {
       errors.push('XPath Matchers must be valid JSON');
     }
+    
+    // Validate SOAP version
+    if (stub.soapVersion !== '1.1' && stub.soapVersion !== '1.2') {
+      errors.push('SOAP version must be either 1.1 or 1.2');
+    }
 
     return errors;
+  };
+  
+  // Helper function to check if XML is valid SOAP format
+  const validateXml = (xml: string, type: 'request' | 'response'): boolean => {
+    // Basic check for XML structure
+    const xmlTrimmed = xml.trim();
+    if (!xmlTrimmed.startsWith('<?xml') && !xmlTrimmed.startsWith('<soap:Envelope') && !xmlTrimmed.startsWith('<Envelope')) {
+      return false;
+    }
+    
+    // Check for required SOAP elements
+    const hasEnvelope = xmlTrimmed.includes('<soap:Envelope') || xmlTrimmed.includes('<Envelope');
+    const hasBody = xmlTrimmed.includes('<soap:Body') || xmlTrimmed.includes('<Body');
+    
+    return hasEnvelope && hasBody;
   };
 
   const handleSave = async () => {
@@ -154,8 +204,14 @@ const SoapStubEditor: React.FC = () => {
       setIsDirty(false);
       navigate('/soap-stubs');
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to save SOAP stub';
-      setErrors([errorMessage]);
+      // Enhanced error handling with more specific error messages
+      if (err.response && err.response.data) {
+        setErrors([`Server error: ${err.response.data.error || err.response.data.message || 'Unknown server error'}`]);
+      } else if (err.message) {
+        setErrors([`Failed to save SOAP stub: ${err.message}`]);
+      } else {
+        setErrors(['An unexpected error occurred while saving the SOAP stub']);
+      }
     }
   };
 
@@ -171,6 +227,45 @@ const SoapStubEditor: React.FC = () => {
     } catch (err: any) {
       const errorMessage = err.message || 'Failed to validate WSDL';
       setErrors([errorMessage]);
+    }
+  };
+
+  const handleExecute = async () => {
+    setIsExecuting(true);
+    setExecuteResponse(null);
+    
+    try {
+      // Prepare the SOAP request
+      const soapEnvelope = stub.request;
+      
+      // Execute the request
+      const response = await fetch('http://localhost:8080/__admin/soap', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/xml;charset=UTF-8',
+          'SOAPAction': stub.soapAction
+        },
+        body: soapEnvelope,
+      });
+
+      // Get response data
+      const responseData = await response.text();
+      
+      // Get response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      setExecuteResponse({
+        status: response.status,
+        body: responseData,
+        headers: responseHeaders,
+      });
+    } catch (err) {
+      setErrors([`Failed to execute SOAP stub: ${err instanceof Error ? err.message : String(err)}`]);
+    } finally {
+      setIsExecuting(false);
     }
   };
 
@@ -214,6 +309,19 @@ const SoapStubEditor: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={handleExecute}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-secondary-500 hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isExecuting || id === 'new' || !stub.id}
+          >
+            {isExecuting ? (
+              <RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4 mr-1.5" />
+            )}
+            Execute
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 ${!isDirty ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!isDirty}
@@ -240,6 +348,38 @@ const SoapStubEditor: React.FC = () => {
                   <li key={index}>{error}</li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Execution response */}
+      {executeResponse && (
+        <div className="bg-brand-50 border-l-4 border-brand-500 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Server className="h-5 w-5 text-brand-500" />
+            </div>
+            <div className="ml-3 w-full">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium text-brand-800">
+                  Response (Status: {executeResponse.status})
+                </h3>
+              </div>
+              <div className="mt-2">
+                <h4 className="text-xs font-medium text-brand-700">Headers:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono overflow-x-auto">
+                  {Object.entries(executeResponse.headers).map(([key, value]) => (
+                    <div key={key}>
+                      <span className="font-semibold">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+                <h4 className="text-xs font-medium text-brand-700 mt-2">Body:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono max-h-40 overflow-auto">
+                  <pre>{executeResponse.body}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>

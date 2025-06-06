@@ -44,7 +44,13 @@ dependencies {
     
     // Database
     implementation 'org.xerial:sqlite-jdbc:3.44.1.0'
+    implementation 'com.h2database:h2'
     implementation 'org.hibernate.orm:hibernate-community-dialects'
+    
+    // MongoDB (for future migration)
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:4.11.0'
+    implementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo.spring30x:4.11.0'
     
     // WireMock
     implementation 'org.wiremock:wiremock:3.3.1'

@@ -12,7 +12,8 @@ import {
   FileJson,
   RefreshCw,
   ToggleLeft,
-  ToggleRight
+  ToggleRight,
+  Play
 } from 'lucide-react';
 import { useStubs } from '../context/StubContext';
 import { Stub, defaultStub } from '../types/stub';
@@ -32,6 +33,8 @@ const StubEditor: React.FC = () => {
   const [jsonValue, setJsonValue] = useState('');
   const [errors, setErrors] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [executeResponse, setExecuteResponse] = useState<{status: number, body: string, headers: Record<string, string>} | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   useEffect(() => {
     if (id && id !== 'new') {
@@ -97,6 +100,52 @@ const StubEditor: React.FC = () => {
     setJsonMode(!jsonMode);
   };
 
+  const validateStub = (): string[] => {
+    const validationErrors: string[] = [];
+    
+    // Basic validations
+    if (!stub.name) validationErrors.push('Name is required');
+    if (!stub.request.method) validationErrors.push('HTTP method is required');
+    
+    // URL validation - must have one of the URL matching types
+    if (!stub.request.urlPath && !stub.request.urlPattern && !stub.request.urlPathPattern && !stub.request.url) {
+      validationErrors.push('URL pattern or path is required');
+    }
+    
+    // Response validation
+    if (!stub.response.status) validationErrors.push('Response status is required');
+    
+    // Content type validation for JSON response
+    const contentType = stub.response.headers?.['Content-Type'];
+    if (contentType?.equalTo?.includes('application/json')) {
+      try {
+        if (stub.response.body) {
+          JSON.parse(stub.response.body);
+        }
+      } catch (err) {
+        validationErrors.push('Response body is not valid JSON');
+      }
+    }
+    
+    // Validate query parameters
+    if (stub.request.queryParameters) {
+      for (const [key, value] of Object.entries(stub.request.queryParameters)) {
+        if (!key) validationErrors.push('Query parameter name is required');
+        if (!value.equalTo && key) validationErrors.push(`Query parameter '${key}' value is required`);
+      }
+    }
+    
+    // Validate headers
+    if (stub.request.headers) {
+      for (const [key, value] of Object.entries(stub.request.headers)) {
+        if (!key) validationErrors.push('Header name is required');
+        if (!value.equalTo && key) validationErrors.push(`Header '${key}' value is required`);
+      }
+    }
+    
+    return validationErrors;
+  };
+
   const handleSave = async () => {
     try {
       if (jsonMode) {
@@ -120,37 +169,102 @@ const StubEditor: React.FC = () => {
           setErrors(['Invalid JSON format']);
         }
       } else {
-        // Form validation
-        const validationErrors = [];
-        
-        if (!stub.name) validationErrors.push('Name is required');
-        if (!stub.request.method) validationErrors.push('HTTP method is required');
-        if (!stub.request.urlPath && !stub.request.urlPattern && !stub.request.urlPathPattern) {
-          validationErrors.push('URL pattern or path is required');
-        }
-        if (!stub.response.status) validationErrors.push('Response status is required');
+        // Form validation using the enhanced validateStub function
+        const validationErrors = validateStub();
         
         if (validationErrors.length > 0) {
           setErrors(validationErrors);
           return;
         }
         
-        if (id && id !== 'new') {
-          await updateStub(id, stub);
-        } else {
-          await addStub(stub);
+        try {
+          if (id && id !== 'new') {
+            await updateStub(id, stub);
+          } else {
+            await addStub(stub);
+          }
+          
+          setIsDirty(false);
+          navigate('/stubs');
+        } catch (err: any) {
+          // Enhanced error handling
+          if (err.response && err.response.data) {
+            setErrors([`Server error: ${err.response.data.error || err.response.data.message || 'Unknown server error'}`]);
+          } else {
+            setErrors([`Failed to save stub: ${err.message || 'Unknown error'}`]);
+          }
         }
-        
-        setIsDirty(false);
-        navigate('/stubs');
       }
-    } catch (err) {
-      setErrors(['Failed to save stub']);
+    } catch (err: any) {
+      // Fallback error handling
+      setErrors([`Error: ${err.message || 'An unexpected error occurred'}`]);
     }
   };
 
   const handleToggleEnabled = () => {
     handleChange('enabled', !stub.enabled);
+  };
+
+  const handleExecute = async () => {
+    setIsExecuting(true);
+    setExecuteResponse(null);
+    
+    try {
+      // Determine the URL to call based on the stub configuration
+      let url = '';
+      if (stub.request.urlPath) {
+        url = `http://localhost:8080${stub.request.urlPath}`;
+      } else if (stub.request.url) {
+        url = stub.request.url;
+      } else if (stub.request.urlPattern || stub.request.urlPathPattern) {
+        setErrors(['Cannot execute stubs with URL patterns. Please use a specific URL path.']);
+        setIsExecuting(false);
+        return;
+      }
+
+      // Add query parameters if present
+      if (stub.request.queryParameters && Object.keys(stub.request.queryParameters).length > 0) {
+        const queryParams = new URLSearchParams();
+        Object.entries(stub.request.queryParameters).forEach(([key, value]) => {
+          queryParams.append(key, value.equalTo);
+        });
+        url += `?${queryParams.toString()}`;
+      }
+
+      // Prepare headers
+      const headers: Record<string, string> = {};
+      if (stub.request.headers) {
+        Object.entries(stub.request.headers).forEach(([key, value]) => {
+          headers[key] = value.equalTo;
+        });
+      }
+
+      // Execute the request
+      const response = await fetch(url, {
+        method: stub.request.method,
+        headers,
+        body: stub.request.body ? stub.request.body : undefined,
+      });
+
+      // Get response data
+      const responseData = await response.text();
+      
+      // Get response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      setExecuteResponse({
+        status: response.status,
+        body: responseData,
+        headers: responseHeaders,
+      });
+    } catch (err) {
+      setErrors([`Failed to execute stub: ${err instanceof Error ? err.message : String(err)}`]);
+    } finally {
+      setIsExecuting(false);
+    }
   };
 
   return (
@@ -201,6 +315,19 @@ const StubEditor: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={handleExecute}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-secondary-500 hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isExecuting || id === 'new' || !stub.id}
+          >
+            {isExecuting ? (
+              <RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4 mr-1.5" />
+            )}
+            Execute
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 ${!isDirty ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!isDirty}
@@ -227,6 +354,38 @@ const StubEditor: React.FC = () => {
                   <li key={index}>{error}</li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Execution response */}
+      {executeResponse && (
+        <div className="bg-brand-50 border-l-4 border-brand-500 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Server className="h-5 w-5 text-brand-500" />
+            </div>
+            <div className="ml-3 w-full">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium text-brand-800">
+                  Response (Status: {executeResponse.status})
+                </h3>
+              </div>
+              <div className="mt-2">
+                <h4 className="text-xs font-medium text-brand-700">Headers:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono overflow-x-auto">
+                  {Object.entries(executeResponse.headers).map(([key, value]) => (
+                    <div key={key}>
+                      <span className="font-semibold">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+                <h4 className="text-xs font-medium text-brand-700 mt-2">Body:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono max-h-40 overflow-auto">
+                  <pre>{executeResponse.body}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>

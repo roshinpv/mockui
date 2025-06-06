@@ -1,0 +1,6 @@
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0000 filter=lfs diff=lfs merge=lfs -text
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0001 filter=lfs diff=lfs merge=lfs -text
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0002 filter=lfs diff=lfs merge=lfs -text
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0003 filter=lfs diff=lfs merge=lfs -text
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0004 filter=lfs diff=lfs merge=lfs -text
+Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf.part0005 filter=lfs diff=lfs merge=lfs -text

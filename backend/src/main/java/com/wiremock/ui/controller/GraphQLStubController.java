@@ -25,17 +25,17 @@ public class GraphQLStubController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GraphQLStub> getStubById(@PathVariable Long id) {
+    public ResponseEntity<GraphQLStub> getStubById(@PathVariable String id) {
         return ResponseEntity.ok(graphQLStubService.getStubById(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GraphQLStub> updateStub(@PathVariable Long id, @RequestBody GraphQLStub stub) {
+    public ResponseEntity<GraphQLStub> updateStub(@PathVariable String id, @RequestBody GraphQLStub stub) {
         return ResponseEntity.ok(graphQLStubService.updateStub(id, stub));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteStub(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteStub(@PathVariable String id) {
         graphQLStubService.deleteStub(id);
         return ResponseEntity.noContent().build();
     }

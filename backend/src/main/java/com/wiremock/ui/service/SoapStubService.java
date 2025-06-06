@@ -4,6 +4,8 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.wiremock.ui.model.SoapStub;
 import com.wiremock.ui.repository.SoapStubRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,7 @@ import java.util.List;
 public class SoapStubService {
     private final SoapStubRepository soapStubRepository;
     private final WireMockServer wireMockServer;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public SoapStub createStub(SoapStub stub) {
@@ -39,13 +42,13 @@ public class SoapStubService {
     }
 
     @Transactional(readOnly = true)
-    public SoapStub getStubById(Long id) {
+    public SoapStub getStubById(String id) {
         return soapStubRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("SOAP stub not found"));
+            .orElseThrow(() -> new RuntimeException("SOAP stub not found with ID: " + id));
     }
 
     @Transactional
-    public SoapStub updateStub(Long id, SoapStub stub) {
+    public SoapStub updateStub(String id, SoapStub stub) {
         validateSoapMessage(stub.getRequest());
         validateSoapMessage(stub.getResponse());
         
@@ -72,7 +75,7 @@ public class SoapStubService {
     }
 
     @Transactional
-    public void deleteStub(Long id) {
+    public void deleteStub(String id) {
         SoapStub stub = getStubById(id);
         soapStubRepository.delete(stub);
         removeWireMockStub(stub);
@@ -115,13 +118,20 @@ public class SoapStubService {
     }
 
     private void updateWireMockStub(SoapStub stub) {
-        wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo("/soap"))
-            .withHeader("Content-Type", WireMock.containing("text/xml"))
-            .withHeader("SOAPAction", WireMock.equalTo(stub.getSoapAction()))
-            .withRequestBody(WireMock.matchingXPath(stub.getXpathMatchers()))
-            .willReturn(WireMock.aResponse()
-                .withHeader("Content-Type", "text/xml")
-                .withBody(stub.getResponse())));
+        try {
+            String xpathMatchers = stub.getXpathMatchers();
+            String responseXml = stub.getResponse();
+            
+            wireMockServer.stubFor(WireMock.post(WireMock.urlPathEqualTo("/soap"))
+                .withHeader("Content-Type", WireMock.containing("text/xml"))
+                .withHeader("SOAPAction", WireMock.equalTo(stub.getSoapAction()))
+                .withRequestBody(WireMock.matchingXPath(xpathMatchers))
+                .willReturn(WireMock.aResponse()
+                    .withHeader("Content-Type", "text/xml")
+                    .withBody(responseXml)));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update WireMock SOAP stub", e);
+        }
     }
 
     private void removeWireMockStub(SoapStub stub) {

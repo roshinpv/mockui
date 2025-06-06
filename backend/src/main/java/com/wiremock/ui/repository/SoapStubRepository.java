@@ -1,10 +1,12 @@
 package com.wiremock.ui.repository;
 
 import com.wiremock.ui.model.SoapStub;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.stereotype.Repository;
+
 import java.util.List;
 
-public interface SoapStubRepository extends JpaRepository<SoapStub, Long> {
+@Repository
+public interface SoapStubRepository extends MongoRepository<SoapStub, String> {
     List<SoapStub> findByEnabled(boolean enabled);
-    List<SoapStub> findBySoapAction(String soapAction);
 }

@@ -8,7 +8,10 @@ import {
   ToggleLeft,
   ToggleRight,
   GitBranch,
-  Sliders
+  Sliders,
+  Play,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GraphQLStub, defaultGraphQLStub } from '../types/graphql';
@@ -23,6 +26,8 @@ const GraphQLStubEditor: React.FC = () => {
   const [activeTab, setActiveTab] = useState('operation');
   const [errors, setErrors] = useState<string[]>([]);
   const [isDirty, setIsDirty] = useState(false);
+  const [executeResponse, setExecuteResponse] = useState<{status: number, body: string, headers: Record<string, string>} | null>(null);
+  const [isExecuting, setIsExecuting] = useState(false);
 
   // Fetch existing stub if editing
   const { data: existingStub } = useQuery({
@@ -69,23 +74,51 @@ const GraphQLStubEditor: React.FC = () => {
   const validateStub = (): string[] => {
     const errors: string[] = [];
     
+    // Basic validations for required fields
     if (!stub.name) errors.push('Name is required');
     if (!stub.operationName) errors.push('Operation name is required');
     if (!stub.query) errors.push('Query is required');
     if (!stub.response) errors.push('Response is required');
     
+    // GraphQL query structure validation
+    const queryLowerCase = stub.query?.toLowerCase() || '';
+    if (queryLowerCase && 
+        !queryLowerCase.includes('query') && 
+        !queryLowerCase.includes('mutation') && 
+        !queryLowerCase.includes('subscription')) {
+      errors.push('GraphQL query must include a query, mutation, or subscription declaration');
+    }
+    
+    // Response JSON validation
     try {
-      if (stub.response) JSON.parse(stub.response);
+      if (stub.response) {
+        const responseObj = JSON.parse(stub.response);
+        // Check for valid GraphQL response structure
+        if (!responseObj.data && !responseObj.errors) {
+          errors.push('Response must include either "data" or "errors" field');
+        }
+      }
     } catch (e) {
       errors.push('Response must be valid JSON');
     }
 
+    // Variables JSON validation
     if (stub.variables) {
       try {
         JSON.parse(stub.variables);
       } catch (e) {
         errors.push('Variables must be valid JSON');
       }
+    }
+    
+    // Scenario validation
+    if (stub.scenarioName && (!stub.requiredScenarioState && !stub.newScenarioState)) {
+      errors.push('When using scenarios, you must specify either a required state or a new state');
+    }
+    
+    // Priority validation
+    if (stub.priority !== undefined && (typeof stub.priority !== 'number' || stub.priority < 0)) {
+      errors.push('Priority must be a non-negative number');
     }
 
     return errors;
@@ -105,8 +138,68 @@ const GraphQLStubEditor: React.FC = () => {
         await createMutation.mutateAsync(stub);
       }
       setIsDirty(false);
+      navigate('/graphql-stubs');
+    } catch (err: any) {
+      // Enhanced error handling for API failures
+      if (err.response && err.response.data) {
+        setErrors([`Server error: ${err.response.data.error || err.response.data.message || 'Unknown server error'}`]);
+      } else {
+        setErrors([`Failed to save GraphQL stub: ${err.message || 'Unknown error'}`]);
+      }
+    }
+  };
+
+  const handleExecute = async () => {
+    setIsExecuting(true);
+    setExecuteResponse(null);
+    
+    try {
+      // Prepare variables
+      let variables = {};
+      if (stub.variables) {
+        try {
+          variables = JSON.parse(stub.variables);
+        } catch (e) {
+          setErrors(['Variables must be valid JSON']);
+          setIsExecuting(false);
+          return;
+        }
+      }
+
+      // Prepare the GraphQL request
+      const graphqlRequest = {
+        query: stub.query,
+        operationName: stub.operationName,
+        variables
+      };
+
+      // Execute the request
+      const response = await fetch('http://localhost:8080/graphql', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(graphqlRequest),
+      });
+
+      // Get response data
+      const responseData = await response.text();
+      
+      // Get response headers
+      const responseHeaders: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        responseHeaders[key] = value;
+      });
+
+      setExecuteResponse({
+        status: response.status,
+        body: responseData,
+        headers: responseHeaders,
+      });
     } catch (err) {
-      setErrors(['Failed to save GraphQL stub']);
+      setErrors([`Failed to execute GraphQL stub: ${err instanceof Error ? err.message : String(err)}`]);
+    } finally {
+      setIsExecuting(false);
     }
   };
 
@@ -150,6 +243,19 @@ const GraphQLStubEditor: React.FC = () => {
           </button>
           <button
             type="button"
+            onClick={handleExecute}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-secondary-500 hover:bg-secondary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={isExecuting || id === 'new' || !stub.id}
+          >
+            {isExecuting ? (
+              <RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />
+            ) : (
+              <Play className="h-4 w-4 mr-1.5" />
+            )}
+            Execute
+          </button>
+          <button
+            type="button"
             onClick={handleSave}
             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-500 hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 ${!isDirty ? 'opacity-50 cursor-not-allowed' : ''}`}
             disabled={!isDirty}
@@ -176,6 +282,38 @@ const GraphQLStubEditor: React.FC = () => {
                   <li key={index}>{error}</li>
                 ))}
               </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Execution response */}
+      {executeResponse && (
+        <div className="bg-brand-50 border-l-4 border-brand-500 p-4 mb-6">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <Server className="h-5 w-5 text-brand-500" />
+            </div>
+            <div className="ml-3 w-full">
+              <div className="flex justify-between items-center">
+                <h3 className="text-sm font-medium text-brand-800">
+                  Response (Status: {executeResponse.status})
+                </h3>
+              </div>
+              <div className="mt-2">
+                <h4 className="text-xs font-medium text-brand-700">Headers:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono overflow-x-auto">
+                  {Object.entries(executeResponse.headers).map(([key, value]) => (
+                    <div key={key}>
+                      <span className="font-semibold">{key}:</span> {value}
+                    </div>
+                  ))}
+                </div>
+                <h4 className="text-xs font-medium text-brand-700 mt-2">Body:</h4>
+                <div className="mt-1 bg-white p-2 rounded text-xs font-mono max-h-40 overflow-auto">
+                  <pre>{executeResponse.body}</pre>
+                </div>
+              </div>
             </div>
           </div>
         </div>

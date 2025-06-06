@@ -1,18 +1,41 @@
 spring:
-  datasource:
-    url: jdbc:sqlite:wiremock.db
-    driver-class-name: org.sqlite.JDBC
-    username: sa
-    password: password
-  jpa:
-    database-platform: org.hibernate.community.dialect.SQLiteDialect
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+#  datasource:
+#    url: jdbc:sqlite:wiremock.db
+#    driver-class-name: org.sqlite.JDBC
+#    username: sa
+#    password: password
+#  jpa:
+#    database-platform: org.hibernate.community.dialect.SQLiteDialect
+#    hibernate:
+#      ddl-auto: update
+#    show-sql: true
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: wiremockui
+      auto-index-creation: true
+      connection-timeout: 5000
+      socket-timeout: 5000
+      max-wait-time: 10000
+  main:
+    allow-bean-definition-overriding: true
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.mongo.embedded.EmbeddedMongoAutoConfiguration
+
+
+
+# Logging settings
+logging:
+  level:
+    org.springframework.data.mongodb: DEBUG
+    org.mongodb: DEBUG
+    com.wiremock.ui: DEBUG
 
 wiremock:
   server:
-    port: 8081
+    port: 8082
     root-dir: ./wiremock-data
     enable-browser-proxying: false
     disable-request-journal: false

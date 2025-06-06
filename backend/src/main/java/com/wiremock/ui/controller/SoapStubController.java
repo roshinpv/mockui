@@ -31,7 +31,7 @@ public class SoapStubController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> getStubById(@PathVariable Long id) {
+    public ResponseEntity<?> getStubById(@PathVariable String id) {
         try {
             return ResponseEntity.ok(soapStubService.getStubById(id));
         } catch (Exception e) {
@@ -41,7 +41,7 @@ public class SoapStubController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateStub(@PathVariable Long id, @RequestBody SoapStub stub) {
+    public ResponseEntity<?> updateStub(@PathVariable String id, @RequestBody SoapStub stub) {
         try {
             return ResponseEntity.ok(soapStubService.updateStub(id, stub));
         } catch (Exception e) {
@@ -51,7 +51,7 @@ public class SoapStubController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteStub(@PathVariable Long id) {
+    public ResponseEntity<?> deleteStub(@PathVariable String id) {
         try {
             soapStubService.deleteStub(id);
             return ResponseEntity.noContent().build();
